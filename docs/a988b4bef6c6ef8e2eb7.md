@@ -1,6 +1,6 @@
 ---
 title: LangChain Custom Tool (Confluence) 
-tags: Python langchain Confluence
+tags: Python LangChain Confluence
 author: nakamasato
 slide: false
 ---

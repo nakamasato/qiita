@@ -1,9 +1,5 @@
-# Qiita
+#!/bin/bash
 
-https://qiita.com/api/v2/docs
-
-
-```bash
 page=1
 while true; do
   items=$(curl -s "https://qiita.com/api/v2/users/nakamasato/items?page=${page}&per_page=100")
@@ -18,4 +14,3 @@ while true; do
   
   page=$((page + 1))
 done
-```
