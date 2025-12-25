@@ -1,0 +1,100 @@
+name: Monthly Update
+
+on:
+  schedule:
+    # Runs at 00:00 UTC on the 1st of every month
+    - cron: '0 0 1 * *'
+  workflow_dispatch:  # Allow manual trigger
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Run update script
+        run: |
+          chmod +x update.sh
+          ./update.sh
+
+      - name: Check for changes
+        id: check_changes
+        run: |
+          if [[ -n $(git status --porcelain) ]]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Pull Request
+        if: steps.check_changes.outputs.has_changes == 'true'
+        id: create_pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Configure git
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Create a new branch
+          BRANCH_NAME="monthly-update-$(date +%Y%m%d)"
+          git checkout -b "$BRANCH_NAME"
+
+          # Add and commit changes
+          git add docs/
+          git commit -m "chore: monthly update from Qiita
+
+📅 Automated monthly update of articles from Qiita
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
+
+          # Push the branch
+          git push origin "$BRANCH_NAME"
+
+          # Create PR with auto-merge
+          PR_URL=$(gh pr create \
+            --title "chore: monthly update $(date +%Y-%m-%d)" \
+            --body "## Summary
+- Automated monthly update of articles from Qiita
+- Downloads latest articles using update.sh script
+
+## Changes
+This PR updates the docs directory with the latest articles from Qiita.
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)" \
+            --base main \
+            --head "$BRANCH_NAME")
+
+          # Extract PR number from URL
+          PR_NUMBER=$(echo "$PR_URL" | grep -o '[0-9]*$')
+          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
+
+      - name: Generate GitHub App token
+        if: steps.check_changes.outputs.has_changes == 'true'
+        id: app_token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.GH_APP_APP_ID }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+
+      - name: Approve Pull Request
+        if: steps.check_changes.outputs.has_changes == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app_token.outputs.token }}
+        run: |
+          gh pr review ${{ steps.create_pr.outputs.pr_number }} --approve --body "Auto-approved by GitHub App 🤖"
+
+      - name: Enable auto-merge
+        if: steps.check_changes.outputs.has_changes == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr merge ${{ steps.create_pr.outputs.pr_number }} --auto --squash --delete-branch
