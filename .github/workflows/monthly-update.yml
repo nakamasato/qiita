@@ -47,13 +47,16 @@ jobs:
 
           # Add and commit changes
           git add docs/
-          git commit -m "chore: monthly update from Qiita
+          git commit -m "$(cat <<'COMMIT_MSG'
+chore: monthly update from Qiita
 
 📅 Automated monthly update of articles from Qiita
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
-Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
+Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
+COMMIT_MSG
+)"
 
           # Push the branch
           git push origin "$BRANCH_NAME"
@@ -61,14 +64,17 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
           # Create PR with auto-merge
           PR_URL=$(gh pr create \
             --title "chore: monthly update $(date +%Y-%m-%d)" \
-            --body "## Summary
+            --body "$(cat <<'PR_BODY'
+## Summary
 - Automated monthly update of articles from Qiita
 - Downloads latest articles using update.sh script
 
 ## Changes
 This PR updates the docs directory with the latest articles from Qiita.
 
-🤖 Generated with [Claude Code](https://claude.com/claude-code)" \
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+PR_BODY
+)" \
             --base main \
             --head "$BRANCH_NAME")
 
