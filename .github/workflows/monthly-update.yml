@@ -17,11 +17,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y jq curl
-
       - name: Run update script
         run: |
           chmod +x update.sh
