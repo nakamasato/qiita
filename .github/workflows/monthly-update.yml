@@ -60,11 +60,7 @@ jobs:
           cat > /tmp/commit-msg.txt << 'EOF'
           chore: monthly update from Qiita
 
-          📅 Automated monthly update of articles from Qiita
-
-          🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-          Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
+          Automated monthly update of articles from Qiita
           EOF
 
           git commit -F /tmp/commit-msg.txt
@@ -88,8 +84,6 @@ jobs:
 
           ## Changes
           This PR updates the docs directory with the latest articles from Qiita.
-
-          🤖 Generated with [Claude Code](https://claude.com/claude-code)
           EOF
 
             # Create PR
