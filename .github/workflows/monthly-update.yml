@@ -84,15 +84,25 @@ jobs:
           🤖 Generated with [Claude Code](https://claude.com/claude-code)
           EOF
 
-          # Create PR with auto-merge
-          PR_URL=$(gh pr create \
-            --title "chore: monthly update $(date +%Y-%m-%d)" \
-            --body-file /tmp/pr-body.txt \
-            --base main \
-            --head "$BRANCH_NAME")
+          # Check if PR already exists for this branch
+          EXISTING_PR=$(gh pr list --head "$BRANCH_NAME" --base main --json number --jq '.[0].number')
 
-          # Extract PR number from URL
-          PR_NUMBER=$(echo "$PR_URL" | grep -o '[0-9]*$')
+          if [ -n "$EXISTING_PR" ]; then
+            # PR already exists, use existing PR number
+            echo "PR already exists: #$EXISTING_PR"
+            PR_NUMBER="$EXISTING_PR"
+          else
+            # Create new PR
+            PR_URL=$(gh pr create \
+              --title "chore: monthly update $(date +%Y-%m-%d)" \
+              --body-file /tmp/pr-body.txt \
+              --base main \
+              --head "$BRANCH_NAME")
+
+            # Extract PR number from URL
+            PR_NUMBER=$(echo "$PR_URL" | grep -o '[0-9]*$')
+          fi
+
           echo "pr_number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
           echo "branch_name=$BRANCH_NAME" >> "$GITHUB_OUTPUT"
 
