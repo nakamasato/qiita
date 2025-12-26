@@ -54,7 +54,7 @@ jobs:
           git checkout -b "$BRANCH_NAME"
 
           # Add and commit changes
-          git add docs/
+          git add .
 
           # Create commit message
           cat > /tmp/commit-msg.txt << 'EOF'
@@ -70,7 +70,7 @@ jobs:
           git commit -F /tmp/commit-msg.txt
 
           # Push the branch
-          git push origin "$BRANCH_NAME"
+          git push -f origin "$BRANCH_NAME"
 
           # Create PR body
           cat > /tmp/pr-body.txt << 'EOF'
