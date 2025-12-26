@@ -31,11 +31,19 @@ jobs:
             echo "has_changes=false" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Generate GitHub App token
+        if: steps.check_changes.outputs.has_changes == 'true'
+        id: app_token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.GH_APP_APP_ID }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+
       - name: Create Pull Request
         if: steps.check_changes.outputs.has_changes == 'true'
         id: create_pr
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ steps.app_token.outputs.token }}
         run: |
           # Configure git
           git config user.name "github-actions[bot]"
@@ -87,14 +95,6 @@ jobs:
           PR_NUMBER=$(echo "$PR_URL" | grep -o '[0-9]*$')
           echo "pr_number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
           echo "branch_name=$BRANCH_NAME" >> "$GITHUB_OUTPUT"
-
-      - name: Generate GitHub App token
-        if: steps.check_changes.outputs.has_changes == 'true'
-        id: app_token
-        uses: actions/create-github-app-token@v2
-        with:
-          app-id: ${{ secrets.GH_APP_APP_ID }}
-          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
 
       - name: Approve Pull Request
         if: steps.check_changes.outputs.has_changes == 'true'
