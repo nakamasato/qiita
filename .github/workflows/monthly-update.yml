@@ -72,8 +72,16 @@ jobs:
           # Push the branch
           git push -f origin "$BRANCH_NAME"
 
-          # Create PR body
-          cat > /tmp/pr-body.txt << 'EOF'
+          # Check if PR already exists
+          EXISTING_PR=$(gh pr list --head "$BRANCH_NAME" --base main --json number --jq '.[0].number' || echo "")
+
+          if [ -n "$EXISTING_PR" ]; then
+            echo "PR already exists: #$EXISTING_PR"
+            echo "pr_number=$EXISTING_PR" >> "$GITHUB_OUTPUT"
+            echo "branch_name=$BRANCH_NAME" >> "$GITHUB_OUTPUT"
+          else
+            # Create PR body
+            cat > /tmp/pr-body.txt << 'EOF'
           ## Summary
           - Automated monthly update of articles from Qiita
           - Downloads latest articles using update.sh script
@@ -84,17 +92,18 @@ jobs:
           🤖 Generated with [Claude Code](https://claude.com/claude-code)
           EOF
 
-          # Create PR with auto-merge
-          PR_URL=$(gh pr create \
-            --title "chore: monthly update $(date +%Y-%m-%d)" \
-            --body-file /tmp/pr-body.txt \
-            --base main \
-            --head "$BRANCH_NAME")
+            # Create PR
+            PR_URL=$(gh pr create \
+              --title "chore: monthly update $(date +%Y-%m-%d)" \
+              --body-file /tmp/pr-body.txt \
+              --base main \
+              --head "$BRANCH_NAME")
 
-          # Extract PR number from URL
-          PR_NUMBER=$(echo "$PR_URL" | grep -o '[0-9]*$')
-          echo "pr_number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
-          echo "branch_name=$BRANCH_NAME" >> "$GITHUB_OUTPUT"
+            # Extract PR number from URL
+            PR_NUMBER=$(echo "$PR_URL" | grep -o '[0-9]*$')
+            echo "pr_number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
+            echo "branch_name=$BRANCH_NAME" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Enable auto-merge
         if: steps.check_changes.outputs.has_changes == 'true'
